@@ -46,7 +46,7 @@ export async function getTeams(): Promise<Team[]> {
         }
     });
 
-    return teams.map(t => ({
+    return teams.map((t: any) => ({
         id: t.id,
         name: t.name,
         description: t.description || "",
@@ -69,7 +69,7 @@ export async function getCandidates(): Promise<Candidate[]> {
         }
     });
 
-    return candidates.map(c => {
+    return candidates.map((c: any) => {
         const resume = c.resumeJson ? JSON.parse(c.resumeJson) : undefined;
         const preferences = c.preferencesJson ? JSON.parse(c.preferencesJson) : undefined;
 
@@ -81,7 +81,7 @@ export async function getCandidates(): Promise<Candidate[]> {
         };
 
         const matchScores: Record<string, number> = {};
-        c.matchResults.forEach(m => {
+        c.matchResults.forEach((m: any) => {
             matchScores[m.teamId] = m.score;
         });
 
