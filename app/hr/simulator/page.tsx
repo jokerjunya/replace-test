@@ -1,19 +1,39 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MOCK_TEAMS, MOCK_CANDIDATES, Team, Candidate, Person } from "@/lib/mockData";
+import { Team, Candidate, Person } from "@/lib/mockData";
 import { TeamCard } from "@/components/hr/TeamCard";
 import { CandidateCard } from "@/components/hr/CandidateCard";
 import { PersonDetailModal } from "@/components/hr/PersonDetailModal";
-import { Sparkles, RefreshCw, ArrowRight, Users } from "lucide-react";
+import { Sparkles, RefreshCw, ArrowRight, Users, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getTeams, getCandidates } from "@/app/actions";
 
 export default function SimulatorPage() {
-    const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
-    const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [candidates, setCandidates] = useState<Candidate[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isSimulating, setIsSimulating] = useState(false);
     const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [fetchedTeams, fetchedCandidates] = await Promise.all([
+                    getTeams(),
+                    getCandidates()
+                ]);
+                setTeams(fetchedTeams);
+                setCandidates(fetchedCandidates);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     // Refs for drop zones (Team Cards)
     const teamRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -90,11 +110,27 @@ export default function SimulatorPage() {
         setIsSimulating(false);
     };
 
-    const handleReset = () => {
-        setCandidates(MOCK_CANDIDATES.map(c => ({ ...c, status: "pending", assignedTeamId: undefined })));
+    const handleReset = async () => {
+        setIsLoading(true);
+        try {
+            const fetchedCandidates = await getCandidates();
+            setCandidates(fetchedCandidates);
+        } catch (error) {
+            console.error("Failed to reset:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const pendingCandidates = candidates.filter((c) => c.status === "pending");
+
+    if (isLoading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col">

@@ -1,16 +1,39 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MOCK_CANDIDATES, MOCK_TEAMS, Team, Candidate } from "@/lib/mockData";
+import { Team, Candidate, MOCK_TEAMS } from "@/lib/mockData"; // Keep MOCK_TEAMS for getBestMatch logic if needed, or fetch
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, TrendingUp, Users, ArrowRight, Star } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, TrendingUp, Users, ArrowRight, Star, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { PersonDetailModal } from "@/components/hr/PersonDetailModal";
+import { getCandidates, getTeams } from "@/app/actions";
 
 export default function MatchingPage() {
+    const [candidates, setCandidates] = useState<Candidate[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [fetchedCandidates, fetchedTeams] = await Promise.all([
+                    getCandidates(),
+                    getTeams()
+                ]);
+                setCandidates(fetchedCandidates);
+                setTeams(fetchedTeams);
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
     // Helper to find best match
     const getBestMatch = (candidate: Candidate) => {
         let bestTeamId = "";
@@ -23,7 +46,7 @@ export default function MatchingPage() {
             }
         });
 
-        const team = MOCK_TEAMS.find(t => t.id === bestTeamId);
+        const team = teams.find(t => t.id === bestTeamId);
         return { team, score: highestScore };
     };
 
@@ -36,6 +59,14 @@ export default function MatchingPage() {
     };
 
     const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background text-foreground p-8">
@@ -53,7 +84,7 @@ export default function MatchingPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {MOCK_CANDIDATES.map((candidate, index) => {
+                    {candidates.map((candidate, index) => {
                         const { team, score } = getBestMatch(candidate);
                         if (!team) return null;
 

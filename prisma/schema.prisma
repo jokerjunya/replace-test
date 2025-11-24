@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --- User & Auth ---
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  role          String    // "ADMIN", "HR", "MANAGER", "EMPLOYEE" (SQLite doesn't support enums)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Link to a specific profile type
+  employee      Employee?
+  candidate     Candidate?
+}
+
+// --- Organization ---
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String
+  teams     Team[]
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  themeColor  String?
+  
+  // Metrics
+  psychologicalSafety Float @default(0)
+  productivity        Float @default(0)
+  innovation          Float @default(0)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  leaderId    String?
+  leader      Employee?   @relation("TeamLeader", fields: [leaderId], references: [id])
+  
+  members     Employee[]  @relation("TeamMembers")
+  
+  // Reverse relation for matching
+  matchResults MatchResult[]
+}
+
+// --- People ---
+
+model Employee {
+  id          String   @id @default(cuid())
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  firstName   String
+  lastName    String
+  role        String
+  avatarUrl   String?
+  
+  // Performance Metrics
+  stressLevel Float    @default(0)
+  performance Float    @default(0)
+
+  // Relationships
+  teamId      String?
+  team        Team?    @relation("TeamMembers", fields: [teamId], references: [id])
+  
+  leadingTeam Team[]   @relation("TeamLeader")
+  
+  traits      EmployeeTrait[]
+  
+  interviewsConducted Interview[] @relation("Interviewer")
+}
+
+model Candidate {
+  id          String   @id @default(cuid())
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+
+  firstName   String
+  lastName    String
+  role        String
+  avatarUrl   String?
+  status      String   @default("PENDING") // "PENDING", "ASSIGNED", "REJECTED"
+
+  // Detailed Info
+  resume      String?  // Stored as JSON string in SQLite if Json type has issues, but Prisma supports Json. Let's try Json.
+  preferences String?  // Using String for JSON content to be safe with SQLite limitations in some environments, but Prisma Client handles Json. I'll use Json.
+  
+  // Actually, for SQLite, Prisma maps Json to String automatically.
+  // But let's use Json type in schema for better DX.
+  resumeJson      String? // We will store JSON string here for simplicity in SQLite
+  preferencesJson String? 
+
+  // Relationships
+  traits      CandidateTrait[]
+  interviews  Interview[]
+  
+  // Matching
+  matchResults MatchResult[]
+  assignedTeamId String?
+}
+
+// --- Metadata ---
+
+model Trait {
+  id          String   @id @default(cuid())
+  label       String
+  color       String?
+  employees   EmployeeTrait[]
+  candidates  CandidateTrait[]
+}
+
+model EmployeeTrait {
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  traitId     String
+  trait       Trait    @relation(fields: [traitId], references: [id])
+  weight      Float    @default(1.0)
+
+  @@id([employeeId, traitId])
+}
+
+model CandidateTrait {
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  traitId     String
+  trait       Trait     @relation(fields: [traitId], references: [id])
+  weight      Float     @default(1.0)
+
+  @@id([candidateId, traitId])
+}
+
+// --- Analysis & Matching ---
+
+model MatchResult {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id])
+  
+  score       Float     // 0-100
+  reason      String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([candidateId, teamId])
+}
+
+model Interview {
+  id            String    @id @default(cuid())
+  candidateId   String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  interviewerId String
+  interviewer   Employee  @relation("Interviewer", fields: [interviewerId], references: [id])
+  
+  date          DateTime
+  score         Int       // 1-5
+  feedback      String
+}
