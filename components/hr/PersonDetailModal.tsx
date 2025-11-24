@@ -1,24 +1,24 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Candidate } from "@/lib/mockData";
+import { Person } from "@/lib/mockData";
 import { X, GraduationCap, Briefcase, Award, MessageSquare, DollarSign, Calendar, Heart, User } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface CandidateDetailModalProps {
-    candidate: Candidate | null;
+interface PersonDetailModalProps {
+    person: Person | null;
     isOpen: boolean;
     onClose: () => void;
 }
 
 type Tab = "resume" | "interview" | "preferences";
 
-export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDetailModalProps) {
+export function PersonDetailModal({ person, isOpen, onClose }: PersonDetailModalProps) {
     const [activeTab, setActiveTab] = useState<Tab>("resume");
 
-    if (!candidate) return null;
+    if (!person) return null;
 
     return (
         <AnimatePresence>
@@ -45,15 +45,15 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                             <div className="p-6 border-b border-white/10 flex justify-between items-start bg-white/5">
                                 <div className="flex gap-5">
                                     <img
-                                        src={candidate.avatar}
-                                        alt={candidate.name}
+                                        src={person.avatar}
+                                        alt={person.name}
                                         className="w-20 h-20 rounded-full border-2 border-white/10 bg-white/5"
                                     />
                                     <div>
-                                        <h2 className="text-2xl font-bold text-white">{candidate.name}</h2>
-                                        <p className="text-muted-foreground">{candidate.role}</p>
+                                        <h2 className="text-2xl font-bold text-white">{person.name}</h2>
+                                        <p className="text-muted-foreground">{person.role}</p>
                                         <div className="flex gap-2 mt-3">
-                                            {candidate.traits.map((trait) => (
+                                            {person.traits.map((trait) => (
                                                 <Badge key={trait.id} className={`${trait.color} border-0`}>
                                                     {trait.label}
                                                 </Badge>
@@ -95,9 +95,9 @@ export function CandidateDetailModal({ candidate, isOpen, onClose }: CandidateDe
                             <div className="flex-1 overflow-hidden bg-black/20">
                                 <ScrollArea className="h-full">
                                     <div className="p-8">
-                                        {activeTab === "resume" && <ResumeTab candidate={candidate} />}
-                                        {activeTab === "interview" && <InterviewTab candidate={candidate} />}
-                                        {activeTab === "preferences" && <PreferencesTab candidate={candidate} />}
+                                        {activeTab === "resume" && <ResumeTab person={person} />}
+                                        {activeTab === "interview" && <InterviewTab person={person} />}
+                                        {activeTab === "preferences" && <PreferencesTab person={person} />}
                                     </div>
                                 </ScrollArea>
                             </div>
@@ -128,9 +128,9 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
     );
 }
 
-function ResumeTab({ candidate }: { candidate: Candidate }) {
-    if (!candidate.details) return <div className="text-muted-foreground">No detailed information available.</div>;
-    const { resume } = candidate.details;
+function ResumeTab({ person }: { person: Person }) {
+    if (!person.details) return <div className="text-muted-foreground">No detailed information available.</div>;
+    const { resume } = person.details;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -188,9 +188,11 @@ function ResumeTab({ candidate }: { candidate: Candidate }) {
     );
 }
 
-function InterviewTab({ candidate }: { candidate: Candidate }) {
-    if (!candidate.details) return null;
-    const { interview } = candidate.details;
+function InterviewTab({ person }: { person: Person }) {
+    if (!person.details) return <div className="text-muted-foreground">No interview logs available.</div>;
+    const { interview } = person.details;
+
+    if (interview.length === 0) return <div className="text-muted-foreground">No interview logs available.</div>;
 
     return (
         <div className="space-y-6">
@@ -225,9 +227,9 @@ function InterviewTab({ candidate }: { candidate: Candidate }) {
     );
 }
 
-function PreferencesTab({ candidate }: { candidate: Candidate }) {
-    if (!candidate.details) return null;
-    const { preferences } = candidate.details;
+function PreferencesTab({ person }: { person: Person }) {
+    if (!person.details) return <div className="text-muted-foreground">No preferences available.</div>;
+    const { preferences } = person.details;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -2,9 +2,10 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MOCK_TEAMS, MOCK_CANDIDATES, Team, Candidate } from "@/lib/mockData";
+import { MOCK_TEAMS, MOCK_CANDIDATES, Team, Candidate, Person } from "@/lib/mockData";
 import { TeamCard } from "@/components/hr/TeamCard";
 import { CandidateCard } from "@/components/hr/CandidateCard";
+import { PersonDetailModal } from "@/components/hr/PersonDetailModal";
 import { Sparkles, RefreshCw, ArrowRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,7 @@ export default function SimulatorPage() {
     const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
     const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
     const [isSimulating, setIsSimulating] = useState(false);
+    const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
     // Refs for drop zones (Team Cards)
     const teamRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -148,6 +150,7 @@ export default function SimulatorPage() {
                                     key={candidate.id}
                                     candidate={candidate}
                                     onDragEnd={(info) => handleDragEnd(candidate.id, info)} // Pass info from framer motion
+                                    onClick={() => setSelectedPerson(candidate)}
                                 />
                             ))}
                         </AnimatePresence>
@@ -176,12 +179,19 @@ export default function SimulatorPage() {
                                     candidates={candidates.filter(
                                         (c) => c.assignedTeamId === team.id
                                     )}
+                                    onMemberClick={setSelectedPerson}
                                 />
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
+
+            <PersonDetailModal
+                person={selectedPerson}
+                isOpen={!!selectedPerson}
+                onClose={() => setSelectedPerson(null)}
+            />
         </div>
     );
 }

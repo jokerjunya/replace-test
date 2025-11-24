@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, TrendingUp, Users, ArrowRight, Star } from "lucide-react";
 import { useState } from "react";
-import { CandidateDetailModal } from "@/components/hr/CandidateDetailModal";
+import { PersonDetailModal } from "@/components/hr/PersonDetailModal";
 
 export default function MatchingPage() {
     // Helper to find best match
@@ -155,8 +155,8 @@ export default function MatchingPage() {
                     })}
                 </div>
 
-                <CandidateDetailModal
-                    candidate={selectedCandidate}
+                <PersonDetailModal
+                    person={selectedCandidate}
                     isOpen={!!selectedCandidate}
                     onClose={() => setSelectedCandidate(null)}
                 />

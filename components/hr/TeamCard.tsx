@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Team, Candidate } from "@/lib/mockData";
+import { Team, Candidate, Person } from "@/lib/mockData";
 import { Users, Zap, Shield, Crown } from "lucide-react";
 
 interface TeamCardProps {
@@ -9,9 +9,10 @@ interface TeamCardProps {
     candidates: Candidate[]; // Candidates currently assigned (simulated) to this team
     isOver?: boolean; // Is a draggable item currently hovering over this card?
     onDrop?: (candidateId: string) => void; // Callback when a candidate is dropped here
+    onMemberClick?: (person: Person) => void;
 }
 
-export function TeamCard({ team, candidates, isOver }: TeamCardProps) {
+export function TeamCard({ team, candidates, isOver, onMemberClick }: TeamCardProps) {
     // Calculate simulated metrics (simplified logic for demo)
     // In a real app, this would be complex. Here we just boost metrics based on candidate count/traits.
     const bonus = candidates.length * 2;
@@ -39,7 +40,10 @@ export function TeamCard({ team, candidates, isOver }: TeamCardProps) {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 bg-black/20 p-3 rounded-xl backdrop-blur-sm">
+                <div
+                    className="flex items-center gap-3 bg-black/20 p-3 rounded-xl backdrop-blur-sm cursor-pointer hover:bg-black/30 transition-colors"
+                    onClick={() => onMemberClick?.(team.leader)}
+                >
                     <div className="relative">
                         <img src={team.leader.avatar} alt={team.leader.name} className="w-12 h-12 rounded-full border-2 border-white/30" />
                         <div className="absolute -top-1 -right-1 bg-yellow-400 text-black p-0.5 rounded-full">
@@ -79,7 +83,11 @@ export function TeamCard({ team, candidates, isOver }: TeamCardProps) {
                     <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">Team Members</p>
                     <div className="flex flex-wrap gap-2">
                         {team.members.map((member) => (
-                            <div key={member.id} className="relative group">
+                            <div
+                                key={member.id}
+                                className="relative group cursor-pointer"
+                                onClick={() => onMemberClick?.(member)}
+                            >
                                 <img
                                     src={member.avatar}
                                     alt={member.name}
@@ -94,7 +102,8 @@ export function TeamCard({ team, candidates, isOver }: TeamCardProps) {
                                 key={candidate.id}
                                 initial={{ scale: 0, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="relative"
+                                className="relative cursor-pointer"
+                                onClick={() => onMemberClick?.(candidate)}
                             >
                                 <img
                                     src={candidate.avatar}

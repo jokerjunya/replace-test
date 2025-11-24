@@ -1,35 +1,5 @@
 import { Users, Zap, Shield, Target, Lightbulb, Rocket } from "lucide-react";
 
-export type Trait = {
-    id: string;
-    label: string;
-    color: string; // Tailwind class for badge
-};
-
-export type Person = {
-    id: string;
-    name: string;
-    role: string;
-    avatar: string; // URL or placeholder ID
-    traits: Trait[];
-    stressLevel: number; // 0-100
-    performance: number; // 0-100
-};
-
-export type Team = {
-    id: string;
-    name: string;
-    description: string;
-    leader: Person;
-    members: Person[];
-    metrics: {
-        psychologicalSafety: number; // 0-100
-        productivity: number; // 0-100
-        innovation: number; // 0-100
-    };
-    themeColor: string; // Hex or Tailwind class
-};
-
 export type CandidateDetails = {
     resume: {
         education: { school: string; degree: string; year: string }[];
@@ -52,11 +22,41 @@ export type CandidateDetails = {
     };
 };
 
+export type Trait = {
+    id: string;
+    label: string;
+    color: string; // Tailwind class for badge
+};
+
+export type Person = {
+    id: string;
+    name: string;
+    role: string;
+    avatar: string; // URL or placeholder ID
+    traits: Trait[];
+    stressLevel: number; // 0-100
+    performance: number; // 0-100
+    details?: CandidateDetails;
+};
+
+export type Team = {
+    id: string;
+    name: string;
+    description: string;
+    leader: Person;
+    members: Person[];
+    metrics: {
+        psychologicalSafety: number; // 0-100
+        productivity: number; // 0-100
+        innovation: number; // 0-100
+    };
+    themeColor: string; // Hex or Tailwind class
+};
+
 export type Candidate = Person & {
     status: "pending" | "assigned";
     assignedTeamId?: string;
     matchScores: Record<string, number>; // teamId -> score (0-100)
-    details: CandidateDetails;
 };
 
 // --- Mock Data ---
@@ -68,6 +68,22 @@ const TRAITS: Record<string, Trait> = {
     SUPPORTIVE: { id: "t4", label: "協調性", color: "bg-green-500/20 text-green-300" },
     AMBITIOUS: { id: "t5", label: "野心家", color: "bg-red-500/20 text-red-300" },
     DILIGENT: { id: "t6", label: "誠実", color: "bg-slate-500/20 text-slate-300" },
+};
+
+const MOCK_DETAILS: CandidateDetails = {
+    resume: {
+        education: [{ school: "Existing Univ", degree: "Bachelor", year: "2015" }],
+        workHistory: [{ company: "Current Corp", role: "Employee", period: "2018-Present", description: "社内での実績多数。" }],
+        skills: ["Management", "Communication"],
+        certifications: ["Internal Cert"]
+    },
+    interview: [],
+    preferences: {
+        salary: "Current",
+        startDate: "N/A",
+        workStyle: ["Office"],
+        motivation: "チームの成長に貢献したい。"
+    }
 };
 
 export const MOCK_TEAMS: Team[] = [
@@ -85,13 +101,14 @@ export const MOCK_TEAMS: Team[] = [
             traits: [TRAITS.LEADERSHIP, TRAITS.AMBITIOUS, TRAITS.CREATIVE],
             stressLevel: 45,
             performance: 98,
+            details: MOCK_DETAILS
         },
         members: [
-            { id: "m1", name: "佐藤 浩二", role: "Frontend Dev", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Koji", traits: [TRAITS.CREATIVE, TRAITS.DILIGENT], stressLevel: 30, performance: 88 },
-            { id: "m2", name: "鈴木 愛", role: "Designer", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ai", traits: [TRAITS.CREATIVE, TRAITS.SUPPORTIVE], stressLevel: 25, performance: 90 },
-            { id: "m3", name: "高橋 翔", role: "Backend Dev", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sho", traits: [TRAITS.ANALYTICAL, TRAITS.DILIGENT], stressLevel: 40, performance: 92 },
-            { id: "m4", name: "田中 美咲", role: "Marketer", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Misaki", traits: [TRAITS.AMBITIOUS, TRAITS.SUPPORTIVE], stressLevel: 50, performance: 85 },
-            { id: "m5", name: "伊藤 健太", role: "Engineer", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Kenta", traits: [TRAITS.ANALYTICAL], stressLevel: 35, performance: 80 },
+            { id: "m1", name: "佐藤 浩二", role: "Frontend Dev", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Koji", traits: [TRAITS.CREATIVE, TRAITS.DILIGENT], stressLevel: 30, performance: 88, details: MOCK_DETAILS },
+            { id: "m2", name: "鈴木 愛", role: "Designer", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ai", traits: [TRAITS.CREATIVE, TRAITS.SUPPORTIVE], stressLevel: 25, performance: 90, details: MOCK_DETAILS },
+            { id: "m3", name: "高橋 翔", role: "Backend Dev", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sho", traits: [TRAITS.ANALYTICAL, TRAITS.DILIGENT], stressLevel: 40, performance: 92, details: MOCK_DETAILS },
+            { id: "m4", name: "田中 美咲", role: "Marketer", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Misaki", traits: [TRAITS.AMBITIOUS, TRAITS.SUPPORTIVE], stressLevel: 50, performance: 85, details: MOCK_DETAILS },
+            { id: "m5", name: "伊藤 健太", role: "Engineer", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Kenta", traits: [TRAITS.ANALYTICAL], stressLevel: 35, performance: 80, details: MOCK_DETAILS },
         ],
     },
     {
@@ -108,13 +125,14 @@ export const MOCK_TEAMS: Team[] = [
             traits: [TRAITS.SUPPORTIVE, TRAITS.ANALYTICAL, TRAITS.DILIGENT],
             stressLevel: 20,
             performance: 95,
+            details: MOCK_DETAILS
         },
         members: [
-            { id: "m6", name: "渡辺 裕子", role: "SRE", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Yuko", traits: [TRAITS.DILIGENT, TRAITS.ANALYTICAL], stressLevel: 15, performance: 94 },
-            { id: "m7", name: "小林 大輔", role: "Backend Dev", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Daisuke", traits: [TRAITS.DILIGENT, TRAITS.SUPPORTIVE], stressLevel: 20, performance: 89 },
-            { id: "m8", name: "加藤 舞", role: "QA", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mai", traits: [TRAITS.ANALYTICAL, TRAITS.DILIGENT], stressLevel: 10, performance: 92 },
-            { id: "m9", name: "吉田 拓也", role: "Infra", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Takuya", traits: [TRAITS.ANALYTICAL], stressLevel: 25, performance: 88 },
-            { id: "m10", name: "佐々木 玲奈", role: "Support", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rena", traits: [TRAITS.SUPPORTIVE], stressLevel: 15, performance: 90 },
+            { id: "m6", name: "渡辺 裕子", role: "SRE", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Yuko", traits: [TRAITS.DILIGENT, TRAITS.ANALYTICAL], stressLevel: 15, performance: 94, details: MOCK_DETAILS },
+            { id: "m7", name: "小林 大輔", role: "Backend Dev", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Daisuke", traits: [TRAITS.DILIGENT, TRAITS.SUPPORTIVE], stressLevel: 20, performance: 89, details: MOCK_DETAILS },
+            { id: "m8", name: "加藤 舞", role: "QA", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mai", traits: [TRAITS.ANALYTICAL, TRAITS.DILIGENT], stressLevel: 10, performance: 92, details: MOCK_DETAILS },
+            { id: "m9", name: "吉田 拓也", role: "Infra", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Takuya", traits: [TRAITS.ANALYTICAL], stressLevel: 25, performance: 88, details: MOCK_DETAILS },
+            { id: "m10", name: "佐々木 玲奈", role: "Support", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rena", traits: [TRAITS.SUPPORTIVE], stressLevel: 15, performance: 90, details: MOCK_DETAILS },
         ],
     },
     {
@@ -131,13 +149,14 @@ export const MOCK_TEAMS: Team[] = [
             traits: [TRAITS.AMBITIOUS, TRAITS.LEADERSHIP, TRAITS.SUPPORTIVE],
             stressLevel: 60,
             performance: 99,
+            details: MOCK_DETAILS
         },
         members: [
-            { id: "m11", name: "井上 真央", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mao", traits: [TRAITS.AMBITIOUS, TRAITS.SUPPORTIVE], stressLevel: 55, performance: 95 },
-            { id: "m12", name: "木村 拓哉", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TakuyaK", traits: [TRAITS.AMBITIOUS, TRAITS.LEADERSHIP], stressLevel: 65, performance: 98 },
-            { id: "m13", name: "工藤 静香", role: "CS", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Shizuka", traits: [TRAITS.SUPPORTIVE, TRAITS.DILIGENT], stressLevel: 40, performance: 92 },
-            { id: "m14", name: "長瀬 智也", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tomoya", traits: [TRAITS.AMBITIOUS, TRAITS.CREATIVE], stressLevel: 50, performance: 90 },
-            { id: "m15", name: "岡田 准一", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Junichi", traits: [TRAITS.DILIGENT, TRAITS.AMBITIOUS], stressLevel: 45, performance: 93 },
+            { id: "m11", name: "井上 真央", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mao", traits: [TRAITS.AMBITIOUS, TRAITS.SUPPORTIVE], stressLevel: 55, performance: 95, details: MOCK_DETAILS },
+            { id: "m12", name: "木村 拓哉", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TakuyaK", traits: [TRAITS.AMBITIOUS, TRAITS.LEADERSHIP], stressLevel: 65, performance: 98, details: MOCK_DETAILS },
+            { id: "m13", name: "工藤 静香", role: "CS", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Shizuka", traits: [TRAITS.SUPPORTIVE, TRAITS.DILIGENT], stressLevel: 40, performance: 92, details: MOCK_DETAILS },
+            { id: "m14", name: "長瀬 智也", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tomoya", traits: [TRAITS.AMBITIOUS, TRAITS.CREATIVE], stressLevel: 50, performance: 90, details: MOCK_DETAILS },
+            { id: "m15", name: "岡田 准一", role: "Sales", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Junichi", traits: [TRAITS.DILIGENT, TRAITS.AMBITIOUS], stressLevel: 45, performance: 93, details: MOCK_DETAILS },
         ],
     },
 ];

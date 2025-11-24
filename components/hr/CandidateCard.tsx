@@ -8,9 +8,10 @@ interface CandidateCardProps {
     candidate: Candidate;
     onDragStart?: () => void;
     onDragEnd?: (info: PanInfo) => void; // teamId is undefined if dropped outside
+    onClick?: () => void;
 }
 
-export function CandidateCard({ candidate, onDragStart, onDragEnd }: CandidateCardProps) {
+export function CandidateCard({ candidate, onDragStart, onDragEnd, onClick }: CandidateCardProps) {
     return (
         <motion.div
             layoutId={candidate.id}
@@ -28,6 +29,7 @@ export function CandidateCard({ candidate, onDragStart, onDragEnd }: CandidateCa
                 // For simplicity in this step, we'll just trigger the end callback.)
                 if (onDragEnd) onDragEnd(info);
             }}
+            onClick={onClick}
             className="bg-white/5 border border-white/10 rounded-xl p-4 cursor-grab active:cursor-grabbing hover:bg-white/10 transition-colors group relative overflow-hidden"
         >
             <div className="flex items-start gap-3">
