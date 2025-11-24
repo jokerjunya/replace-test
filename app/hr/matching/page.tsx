@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, TrendingUp, Users, ArrowRight, Star } from "lucide-react";
+import { useState } from "react";
+import { CandidateDetailModal } from "@/components/hr/CandidateDetailModal";
 
 export default function MatchingPage() {
     // Helper to find best match
@@ -32,6 +34,8 @@ export default function MatchingPage() {
         if (team.id === "team-gamma") return "高い野心とリーダーシップ資質が、営業チームの目標達成意欲と強く共鳴します。";
         return "スキルセットとチームカルチャーの適合性が高いです。";
     };
+
+    const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
     return (
         <div className="min-h-screen bg-background text-foreground p-8">
@@ -137,7 +141,11 @@ export default function MatchingPage() {
                                             </p>
                                         </div>
 
-                                        <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" variant="secondary">
+                                        <Button
+                                            className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                                            variant="secondary"
+                                            onClick={() => setSelectedCandidate(candidate)}
+                                        >
                                             View Detailed Analysis
                                         </Button>
                                     </CardContent>
@@ -146,6 +154,12 @@ export default function MatchingPage() {
                         );
                     })}
                 </div>
+
+                <CandidateDetailModal
+                    candidate={selectedCandidate}
+                    isOpen={!!selectedCandidate}
+                    onClose={() => setSelectedCandidate(null)}
+                />
             </div>
         </div>
     );
