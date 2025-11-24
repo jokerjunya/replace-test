@@ -1,196 +1,156 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Team, Candidate, MOCK_TEAMS } from "@/lib/mockData"; // Keep MOCK_TEAMS for getBestMatch logic if needed, or fetch
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, TrendingUp, Users, ArrowRight, Star, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { PersonDetailModal } from "@/components/hr/PersonDetailModal";
+import { Progress } from "@/components/ui/progress";
+import { Search, Filter, ArrowRight, UserCheck, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { getCandidates, getTeams } from "@/app/actions";
+import { Candidate, Team } from "@/lib/mockData";
 
 export default function MatchingPage() {
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                const [fetchedCandidates, fetchedTeams] = await Promise.all([
-                    getCandidates(),
-                    getTeams()
-                ]);
-                setCandidates(fetchedCandidates);
-                setTeams(fetchedTeams);
-            } catch (error) {
-                console.error("Failed to fetch data:", error);
-            } finally {
-                setIsLoading(false);
-            }
+            const [c, t] = await Promise.all([getCandidates(), getTeams()]);
+            setCandidates(c);
+            setTeams(t);
+            setLoading(false);
         };
         fetchData();
     }, []);
 
-    // Helper to find best match
-    const getBestMatch = (candidate: Candidate) => {
-        let bestTeamId = "";
-        let highestScore = -1;
+    const filteredCandidates = candidates.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-        Object.entries(candidate.matchScores).forEach(([teamId, score]) => {
-            if (score > highestScore) {
-                highestScore = score;
-                bestTeamId = teamId;
-            }
-        });
-
-        const team = teams.find(t => t.id === bestTeamId);
-        return { team, score: highestScore };
-    };
-
-    // Helper to generate match reason (Mock logic for demo)
-    const getMatchReason = (candidate: Candidate, team: Team) => {
-        if (team.id === "team-alpha") return "イノベーション志向と高い創造性が、新規事業開発チームのカルチャーに完全に合致します。";
-        if (team.id === "team-beta") return "着実な遂行能力と分析的思考が、基幹システムの安定運用において重要な役割を果たします。";
-        if (team.id === "team-gamma") return "高い野心とリーダーシップ資質が、営業チームの目標達成意欲と強く共鳴します。";
-        return "スキルセットとチームカルチャーの適合性が高いです。";
-    };
-
-    const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
+    if (loading) {
+        return <div className="p-8 text-center">Loading...</div>;
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-8">
-            <div className="max-w-7xl mx-auto space-y-8">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Final Candidates Matching</h1>
-                        <p className="text-muted-foreground mt-2">
-                            最終候補者3名の最適配置シミュレーション
-                        </p>
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-2">Matching Candidates</h1>
+                    <p className="text-muted-foreground">候補者とチームの適合度を分析し、最適な配置を決定します。</p>
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-64">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                        <Input
+                            placeholder="Search candidates..."
+                            className="pl-9 bg-white/5 border-white/10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                    <Button variant="outline">
-                        Export Report
+                    <Button variant="outline" className="border-white/10 bg-white/5">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
                     </Button>
                 </div>
+            </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {candidates.map((candidate, index) => {
-                        const { team, score } = getBestMatch(candidate);
-                        if (!team) return null;
+            <div className="grid gap-6">
+                {filteredCandidates.map((candidate, index) => (
+                    <motion.div
+                        key={candidate.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                    >
+                        <Card className="bg-white/5 border-white/10 overflow-hidden">
+                            <CardContent className="p-6">
+                                <div className="flex flex-col lg:flex-row gap-6">
+                                    {/* Candidate Info */}
+                                    <div className="flex-1 min-w-[300px]">
+                                        <div className="flex items-start gap-4 mb-4">
+                                            <Avatar className="w-16 h-16 border-2 border-primary/20">
+                                                <AvatarImage src={candidate.avatar} />
+                                                <AvatarFallback>{candidate.name[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <h3 className="text-xl font-bold text-white">{candidate.name}</h3>
+                                                <p className="text-primary">{candidate.role}</p>
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {candidate.traits.map(t => (
+                                                        <Badge key={t.id} variant="secondary" className={`text-xs ${t.color}`}>
+                                                            {t.label}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                        return (
-                            <motion.div
-                                key={candidate.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                            >
-                                <Card className="h-full bg-card/50 backdrop-blur-sm border-primary/10 hover:border-primary/30 transition-all duration-300 overflow-hidden group">
-                                    <div className={`h-2 w-full bg-gradient-to-r ${team.themeColor}`} />
+                                        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground bg-black/20 p-4 rounded-lg">
+                                            <div>
+                                                <span className="block text-xs opacity-70">希望年収</span>
+                                                <span className="text-white">{candidate.details?.preferences.salary}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-xs opacity-70">入社可能時期</span>
+                                                <span className="text-white">{candidate.details?.preferences.startDate}</span>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <span className="block text-xs opacity-70">モチベーション</span>
+                                                <span className="text-white">{candidate.details?.preferences.motivation}</span>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                    <CardHeader className="pb-4">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex gap-4">
-                                                <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
-                                                    <AvatarImage src={candidate.avatar} />
-                                                    <AvatarFallback>{candidate.name[0]}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <CardTitle className="text-xl">{candidate.name}</CardTitle>
-                                                    <p className="text-sm text-muted-foreground">{candidate.role}</p>
-                                                    <div className="flex gap-2 mt-2">
-                                                        {candidate.traits.slice(0, 2).map(trait => (
-                                                            <Badge key={trait.id} variant="secondary" className={`text-xs ${trait.color} bg-opacity-10 border-0`}>
-                                                                {trait.label}
-                                                            </Badge>
-                                                        ))}
+                                    {/* Matching Scores */}
+                                    <div className="flex-[2] grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {teams.map(team => {
+                                            const score = candidate.matchScores[team.id] || 0;
+                                            let scoreColor = "text-muted-foreground";
+                                            let barColor = "bg-muted";
+
+                                            if (score >= 80) {
+                                                scoreColor = "text-emerald-400";
+                                                barColor = "bg-emerald-500";
+                                            } else if (score >= 60) {
+                                                scoreColor = "text-amber-400";
+                                                barColor = "bg-amber-500";
+                                            }
+
+                                            return (
+                                                <div key={team.id} className="bg-white/5 rounded-lg p-4 border border-white/5 hover:border-white/10 transition-colors cursor-pointer group relative overflow-hidden">
+                                                    <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${team.themeColor}`} />
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h4 className="font-medium text-sm text-white truncate pr-2">{team.name}</h4>
+                                                        <span className={`text-lg font-bold ${scoreColor}`}>{score}%</span>
                                                     </div>
+                                                    <Progress value={score} className="h-1.5 mb-3 bg-white/10" indicatorClassName={barColor} />
+
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                                                        <Avatar className="w-5 h-5">
+                                                            <AvatarImage src={team.leader.avatar} />
+                                                        </Avatar>
+                                                        <span className="truncate">{team.leader.name}</span>
+                                                    </div>
+
+                                                    <Button size="sm" className="w-full bg-white/10 hover:bg-white/20 text-white border-0 h-8 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        詳細を見る
+                                                    </Button>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-
-                                    <CardContent className="space-y-6">
-                                        {/* Match Score Area */}
-                                        <div className="p-4 rounded-xl bg-gradient-to-br from-background to-muted/50 border border-border/50 relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-2 opacity-10">
-                                                <Star className="w-24 h-24" />
-                                            </div>
-
-                                            <div className="flex justify-between items-end mb-2 relative z-10">
-                                                <span className="text-sm font-medium text-muted-foreground">Match Score</span>
-                                                <span className="text-3xl font-bold text-primary">{score}%</span>
-                                            </div>
-                                            <div className="w-full bg-secondary/30 h-2 rounded-full overflow-hidden relative z-10">
-                                                <motion.div
-                                                    className="bg-primary h-full rounded-full"
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${score}%` }}
-                                                    transition={{ duration: 1, delay: 0.5 + index * 0.1 }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Boss/Team Info */}
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                <Users className="w-4 h-4" />
-                                                <span>Best Fit Team & Boss</span>
-                                            </div>
-
-                                            <div className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors cursor-pointer">
-                                                <Avatar className="h-12 w-12 border border-border">
-                                                    <AvatarImage src={team.leader.avatar} />
-                                                    <AvatarFallback>{team.leader.name[0]}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium truncate">{team.leader.name}</p>
-                                                    <p className="text-xs text-muted-foreground truncate">{team.name}</p>
-                                                </div>
-                                                <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                            </div>
-                                        </div>
-
-                                        {/* Reason */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                                <span>Why this match?</span>
-                                            </div>
-                                            <p className="text-sm leading-relaxed text-muted-foreground/90">
-                                                {getMatchReason(candidate, team)}
-                                            </p>
-                                        </div>
-
-                                        <Button
-                                            className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                                            variant="secondary"
-                                            onClick={() => setSelectedCandidate(candidate)}
-                                        >
-                                            View Detailed Analysis
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        );
-                    })}
-                </div>
-
-                <PersonDetailModal
-                    person={selectedCandidate}
-                    isOpen={!!selectedCandidate}
-                    onClose={() => setSelectedCandidate(null)}
-                />
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                ))}
             </div>
         </div>
     );

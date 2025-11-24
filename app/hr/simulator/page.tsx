@@ -1,233 +1,119 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Team, Candidate, Person } from "@/lib/mockData";
-import { TeamCard } from "@/components/hr/TeamCard";
-import { CandidateCard } from "@/components/hr/CandidateCard";
-import { PersonDetailModal } from "@/components/hr/PersonDetailModal";
-import { Sparkles, RefreshCw, ArrowRight, Users, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getTeams, getCandidates } from "@/app/actions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertCircle, ArrowRight, RefreshCw, Save } from "lucide-react";
 
 export default function SimulatorPage() {
-    const [teams, setTeams] = useState<Team[]>([]);
-    const [candidates, setCandidates] = useState<Candidate[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSimulating, setIsSimulating] = useState(false);
-    const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+    const [simulationRunning, setSimulationRunning] = useState(false);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [fetchedTeams, fetchedCandidates] = await Promise.all([
-                    getTeams(),
-                    getCandidates()
-                ]);
-                setTeams(fetchedTeams);
-                setCandidates(fetchedCandidates);
-            } catch (error) {
-                console.error("Failed to fetch data:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
-
-    // Refs for drop zones (Team Cards)
-    const teamRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-    const handleDragEnd = (candidateId: string, info: any) => {
-        const dropPoint = {
-            x: info.point.x,
-            y: info.point.y,
-        };
-
-        // Simple collision detection
-        let droppedTeamId: string | undefined;
-
-        for (const team of teams) {
-            const element = teamRefs.current[team.id];
-            if (element) {
-                const rect = element.getBoundingClientRect();
-                if (
-                    dropPoint.x >= rect.left &&
-                    dropPoint.x <= rect.right &&
-                    dropPoint.y >= rect.top &&
-                    dropPoint.y <= rect.bottom
-                ) {
-                    droppedTeamId = team.id;
-                    break;
-                }
-            }
-        }
-
-        if (droppedTeamId) {
-            assignCandidate(candidateId, droppedTeamId);
-        }
+    const runSimulation = () => {
+        setSimulationRunning(true);
+        setTimeout(() => {
+            setSimulationRunning(false);
+        }, 2000);
     };
-
-    const assignCandidate = (candidateId: string, teamId: string) => {
-        setCandidates((prev) =>
-            prev.map((c) =>
-                c.id === candidateId
-                    ? { ...c, status: "assigned", assignedTeamId: teamId }
-                    : c
-            )
-        );
-    };
-
-    const handleAutoAssign = async () => {
-        setIsSimulating(true);
-
-        // Simulate calculation delay for effect
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        const newCandidates = [...candidates];
-
-        // Simple greedy algorithm: assign to highest match score
-        newCandidates.forEach((candidate) => {
-            if (candidate.status === "pending") {
-                let bestTeamId = "";
-                let bestScore = -1;
-
-                Object.entries(candidate.matchScores).forEach(([tId, score]) => {
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestTeamId = tId;
-                    }
-                });
-
-                if (bestTeamId) {
-                    candidate.status = "assigned";
-                    candidate.assignedTeamId = bestTeamId;
-                }
-            }
-        });
-
-        setCandidates(newCandidates);
-        setIsSimulating(false);
-    };
-
-    const handleReset = async () => {
-        setIsLoading(true);
-        try {
-            const fetchedCandidates = await getCandidates();
-            setCandidates(fetchedCandidates);
-        } catch (error) {
-            console.error("Failed to reset:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const pendingCandidates = candidates.filter((c) => c.status === "pending");
-
-    if (isLoading) {
-        return (
-            <div className="h-full flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-        );
-    }
 
     return (
-        <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Team Placement Simulator</h1>
-                    <p className="text-muted-foreground">
-                        AIが候補者の特性とチームの相性を分析し、最適な配置を提案します。
-                    </p>
-                </div>
-                <div className="flex gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={handleReset}
-                        className="border-white/10 text-white hover:bg-white/10"
-                    >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Reset
-                    </Button>
-                    <Button
-                        onClick={handleAutoAssign}
-                        disabled={isSimulating || pendingCandidates.length === 0}
-                        className="bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_-5px_var(--color-primary)]"
-                    >
-                        {isSimulating ? (
-                            <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                            <Sparkles className="w-4 h-4 mr-2" />
-                        )}
-                        Auto Assign All
-                    </Button>
-                </div>
+        <div className="space-y-8">
+            <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Placement Simulator</h1>
+                <p className="text-muted-foreground">異なる配置シナリオをシミュレーションし、組織全体への影響を予測します。</p>
             </div>
 
-            <div className="flex-1 flex gap-8 h-full overflow-hidden">
-                {/* Left Panel: Waiting Room */}
-                <div className="w-80 flex flex-col bg-white/5 rounded-2xl border border-white/10 p-6 overflow-hidden">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="font-bold text-white flex items-center gap-2">
-                            <Users className="w-5 h-5 text-muted-foreground" />
-                            Waiting Room
-                        </h2>
-                        <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs text-white">
-                            {pendingCandidates.length}
-                        </span>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                        <AnimatePresence>
-                            {pendingCandidates.map((candidate) => (
-                                <CandidateCard
-                                    key={candidate.id}
-                                    candidate={candidate}
-                                    onDragEnd={(info) => handleDragEnd(candidate.id, info)} // Pass info from framer motion
-                                    onClick={() => setSelectedPerson(candidate)}
-                                />
-                            ))}
-                        </AnimatePresence>
-
-                        {pendingCandidates.length === 0 && (
-                            <div className="text-center py-10 text-muted-foreground border-2 border-dashed border-white/10 rounded-xl">
-                                <p>No pending candidates</p>
-                                <Button variant="link" onClick={handleReset} className="text-primary">
-                                    Reset Simulation
-                                </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Controls */}
+                <div className="lg:col-span-1 space-y-6">
+                    <Card className="bg-white/5 border-white/10">
+                        <CardHeader>
+                            <CardTitle>Simulation Settings</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Optimization Goal</label>
+                                <Select defaultValue="balance">
+                                    <SelectTrigger className="bg-white/10 border-white/10">
+                                        <SelectValue placeholder="Select goal" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="balance">Team Balance</SelectItem>
+                                        <SelectItem value="performance">Maximize Performance</SelectItem>
+                                        <SelectItem value="safety">Psychological Safety</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Right Panel: Teams Grid */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
-                        {teams.map((team) => (
-                            <div
-                                key={team.id}
-                                ref={(el) => { teamRefs.current[team.id] = el; }} // Assign ref
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Constraint</label>
+                                <Select defaultValue="none">
+                                    <SelectTrigger className="bg-white/10 border-white/10">
+                                        <SelectValue placeholder="Select constraint" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">No Constraints</SelectItem>
+                                        <SelectItem value="budget">Budget Limit</SelectItem>
+                                        <SelectItem value="headcount">Headcount Limit</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button
+                                className="w-full bg-primary hover:bg-primary/90"
+                                onClick={runSimulation}
+                                disabled={simulationRunning}
                             >
-                                <TeamCard
-                                    team={team}
-                                    candidates={candidates.filter(
-                                        (c) => c.assignedTeamId === team.id
-                                    )}
-                                    onMemberClick={setSelectedPerson}
-                                />
+                                {simulationRunning ? (
+                                    <>
+                                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                        Simulating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <ArrowRight className="w-4 h-4 mr-2" />
+                                        Run Simulation
+                                    </>
+                                )}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/5 border-white/10">
+                        <CardHeader>
+                            <CardTitle>Predicted Impact</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Avg. Safety</span>
+                                    <span className="text-emerald-400 font-bold">+4.2%</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Team Balance</span>
+                                    <span className="text-emerald-400 font-bold">+12%</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Risk Level</span>
+                                    <span className="text-amber-400 font-bold">Low</span>
+                                </div>
                             </div>
-                        ))}
-                    </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Simulation Area */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="bg-white/5 border-white/10 min-h-[500px] flex items-center justify-center border-dashed">
+                        <div className="text-center text-muted-foreground">
+                            <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                            <p>Select settings and run simulation to see results</p>
+                            <p className="text-sm mt-2 opacity-50">(Interactive drag & drop interface coming soon)</p>
+                        </div>
+                    </Card>
                 </div>
             </div>
-
-            <PersonDetailModal
-                person={selectedPerson}
-                isOpen={!!selectedPerson}
-                onClose={() => setSelectedPerson(null)}
-            />
         </div>
     );
 }
